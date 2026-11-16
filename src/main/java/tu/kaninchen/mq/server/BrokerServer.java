@@ -4,19 +4,24 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LineBasedFrameDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tu.kaninchen.mq.broker.api.Broker;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,11 +29,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BrokerServer {
 
     private static final Logger log = LoggerFactory.getLogger(BrokerServer.class);
+    static final int MAX_FRAME_BYTES = 1024 * 1024;
 
     private final AtomicInteger connectionCounter = new AtomicInteger();
+    private final Broker broker;
     private volatile EventLoopGroup bossGroup;
     private volatile EventLoopGroup workerGroup;
     private volatile Channel serverChannel;
+
+    public BrokerServer() {
+        this(null);
+    }
+
+    public BrokerServer(Broker broker) {
+        this.broker = broker;
+    }
 
     public synchronized int start(int port) throws InterruptedException {
         if (serverChannel != null) {
@@ -49,7 +64,7 @@ public class BrokerServer {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             String connectionId = "c-" + connectionCounter.incrementAndGet();
-                            ch.pipeline().addLast("connection", new ConnectionHandler(connectionId));
+                            configurePipeline(ch.pipeline(), connectionId, broker);
                         }
                     });
 
@@ -64,6 +79,12 @@ public class BrokerServer {
         log.info("KaninchenMQ listens on port: {}", actualPort);
         logConnectAddresses(actualPort);
         return actualPort;
+    }
+
+    static void configurePipeline(ChannelPipeline pipeline, String connectionId, Broker broker) {
+        pipeline.addLast("frames", new LineBasedFrameDecoder(MAX_FRAME_BYTES, true, true));
+        pipeline.addLast("utf8", new StringEncoder(StandardCharsets.UTF_8));
+        pipeline.addLast("connection", new ConnectionHandler(connectionId, broker));
     }
 
     private void logConnectAddresses(int port) {

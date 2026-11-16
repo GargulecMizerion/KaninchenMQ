@@ -1,24 +1,24 @@
 # Kontrakt między serwerem TCP a rdzeniem KaninchenMQ
 
-Propozycja do wspólnego review. Opisuje komunikację między warstwami dla wszystkich poleceń planowanego protokołu TCP. Obecny serwer odpowiada echem. Sygnatury i przykłady poniżej wyznaczają sposób przejścia od echa do obsługi brokera.
+Serwer nasłuchuje domyślnie na porcie TCP `5680` i rozpoznaje wszystkie opisane tu polecenia. `Main` uruchamia obecnie serwer z działającym `PING`. Aby włączyć operacje rdzenia, przekaż jego implementację przez `new BrokerServer(broker)`.
 
 ## Granica między warstwami
 
 ```text
-Klient → ramka JSON przez TCP → dekoder Netty → ClientCommand
+Klient → ramka JSON przez TCP → dekoder Netty → BrokerInterfaceDto
        → ConnectionHandler → metoda Broker → wynik lub błąd
        → ConnectionHandler → ramka odpowiedzi przez TCP
 ```
 
-**Serwer (osoba A)** składa ramki, odczytuje JSON, sprawdza wymagane pola i ich typy oraz tworzy rekord polecenia, np. `PublishCommand`. Handler wybiera metodę `Broker`, przekazuje argumenty Javy i zamienia wynik na ramkę odpowiedzi. `type` i `requestId` obsługuje warstwa protokołu. `connectionId` nadany przez serwer pełni rolę `sessionId` przy operacjach konsumenta.
+**Serwer (osoba A)** składa ramki i odczytuje JSON. `ClientCommand.decode` sprawdza wymagane pola i ich typy oraz tworzy rekord polecenia, np. `BrokerInterfaceDto.Publish`. Handler wybiera metodę `Broker`, przekazuje argumenty Javy i zamienia wynik na ramkę odpowiedzi. `type` i `requestId` obsługuje warstwa protokołu. `connectionId` nadany przez serwer pełni rolę `sessionId` przy operacjach konsumenta.
 
 **Rdzeń (osoba B)** sprawdza stan brokera i wykonuje operację. Zarządza kolejkami, exchange’ami, bindingami, routingiem, subskrypcjami, ACK/NACK i zapisem stanu. Przyjmuje typy Javy i zwraca wynik domenowy albo błąd z kodem, np. `QUEUE_NOT_FOUND`.
 
-**Uruchomienie.** `Main` tworzy jedną instancję implementacji `Broker` i przekazuje ją do `BrokerServer` oraz REST API. `BrokerServer` podaje ją każdemu `ConnectionHandler` wraz z identyfikatorem połączenia. REST API wywołuje te same metody bezpośrednio w Javie.
+**Uruchomienie.** Po podpięciu rdzenia `Main` będzie tworzyć jedną instancję implementacji `Broker` dla `BrokerServer` i planowanego REST API. `BrokerServer` podaje ją każdemu `ConnectionHandler` wraz z identyfikatorem połączenia. REST API może wywoływać te same metody bezpośrednio w Javie.
 
 ## Wspólny interfejs w Javie
 
-Interfejs i typy użyte w jego sygnaturach mogą znaleźć się w pakiecie `tu.kaninchen.mq.broker.api`.
+Interfejs i typy użyte w jego sygnaturach są w pakiecie `tu.kaninchen.mq.broker.api`. Rdzeń zgłasza błędy domenowe jako `BrokerException` z kodem `BrokerException.Code`.
 
 ```java
 import java.util.concurrent.CompletionStage;
@@ -45,16 +45,17 @@ public interface Broker {
 
 Typy kontraktu to `ExchangeType` z wartościami `DIRECT`, `TOPIC`, `FANOUT`, `PublishResult(int routedQueues)` oraz `Delivery(long deliveryTag, byte[] body)`. Ten ostatni typ opisuje jedno dostarczenie. Handler zna identyfikator subskrypcji z rejestracji funkcji `onDelivery`.
 
-Metody przyjmują operację i szybko zwracają `CompletionStage`. Osoba B może zacząć od jednego osobnego wątku wykonującego operacje rdzenia w kolejności przyjęcia. Netty przekazuje polecenia z danego połączenia w kolejności ich odczytania i rejestruje obsługę wyniku przez `whenComplete`. Po zakończeniu operacji handler zleca zapis odpowiedzi przez `ctx.executor().execute(...)`. Dzięki temu operacja dyskowa może trwać, podczas gdy Netty obsługuje pozostałe połączenia.
+Metody przyjmują operację i szybko zwracają `CompletionStage`. Osoba B może zacząć od jednego osobnego wątku wykonującego operacje rdzenia w kolejności przyjęcia. Netty przekazuje polecenia z danego połączenia w kolejności ich odczytania. Handler rejestruje obsługę wyniku przez `whenCompleteAsync(..., ctx.executor())`, żeby zapisać odpowiedź na wątku Netty po zakończeniu operacji. W tym czasie Netty może obsługiwać pozostałe połączenia.
 
 Po dodaniu trwałości operacje zmieniające trwały stan kończą się sukcesem po zapisaniu zmiany na dysku. Po restarcie rdzeń odtwarza kolejki, exchange’e, bindingi i wiadomości oczekujące, w tym dostarczenia przerwane przed potwierdzeniem. Klient po ponownym połączeniu rejestruje subskrypcje od nowa.
 
 ## Ramki i odpowiedzi
 
-Każda ramka to jeden obiekt JSON w UTF-8 zakończony znakiem nowej linii. Przykłady pokazują zawartość linii. Serwer stosuje limit długości ramki. Klient nadaje `requestId` unikalny wśród swoich oczekujących żądań na danym połączeniu.
+Każda ramka to jeden obiekt JSON w UTF-8 zakończony znakiem nowej linii. Przykłady pokazują zawartość linii. Serwer zamyka połączenie po przekroczeniu limitu 1 MiB na przychodzącą ramkę. Klient nadaje `requestId` unikalny wśród swoich oczekujących żądań na danym połączeniu.
 
 - **Sukces** daje `OK` z `requestId` i ewentualnym wynikiem. `PING` daje `PONG`.
 - **Błąd** daje `ERROR` z `requestId` i kodem `code`. Serwer używa `BAD_REQUEST` przy niepoprawnym formacie, brakującym polu albo nieznanym typie. Gdy z ramki nie da się odczytać identyfikatora, odpowiedź używa `"requestId":null`. Dla poprawnej ramki odrzuconej przez rdzeń handler mapuje kod błędu domenowego, a nieoczekiwany błąd mapuje na `INTERNAL_ERROR`.
+- **Brak podpiętego rdzenia** daje `ERROR` z kodem `BROKER_UNAVAILABLE` dla poleceń wymagających rdzenia.
 - **Dostarczenie** to osobna ramka `DELIVERY`, którą identyfikują `subscriptionId` i `deliveryTag`.
 
 ```json

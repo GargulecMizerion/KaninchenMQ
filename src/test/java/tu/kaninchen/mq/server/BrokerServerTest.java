@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.BindException;
 import java.net.ConnectException;
@@ -43,11 +42,11 @@ class BrokerServerTest {
     }
 
     @Test
-    void echoesDataOverTcp() throws Exception {
+    void answersPingOverTcp() throws Exception {
         int port = server.start(0);
 
         try (Socket socket = connect(port)) {
-            assertEquals("hej", sendAndReceive(socket, "hej"));
+            assertPong(socket, "hej");
         }
     }
 
@@ -56,8 +55,8 @@ class BrokerServerTest {
         int port = server.start(0);
 
         try (Socket socket = connect(port)) {
-            assertEquals("first", sendAndReceive(socket, "first"));
-            assertEquals("second", sendAndReceive(socket, "second"));
+            assertPong(socket, "first");
+            assertPong(socket, "second");
         }
     }
 
@@ -66,20 +65,20 @@ class BrokerServerTest {
         int port = server.start(0);
         int clients = 10;
 
-        List<CompletableFuture<String>> results = new ArrayList<>();
+        List<CompletableFuture<Void>> results = new ArrayList<>();
         for (int i = 0; i < clients; i++) {
-            String msg = "client-" + i;
-            results.add(CompletableFuture.supplyAsync(() -> {
+            String requestId = "client-" + i;
+            results.add(CompletableFuture.runAsync(() -> {
                 try (Socket socket = connect(port)) {
-                    return sendAndReceive(socket, msg);
+                    assertPong(socket, requestId);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }));
         }
 
-        for (int i = 0; i < clients; i++) {
-            assertEquals("client-" + i, results.get(i).get(5, TimeUnit.SECONDS));
+        for (CompletableFuture<Void> result : results) {
+            result.get(5, TimeUnit.SECONDS);
         }
     }
 
@@ -115,7 +114,7 @@ class BrokerServerTest {
         int port = server.start(0);
 
         try (Socket socket = connect(port)) {
-            assertEquals("again", sendAndReceive(socket, "again"));
+            assertPong(socket, "again");
         }
     }
 
@@ -154,22 +153,14 @@ class BrokerServerTest {
         return socket;
     }
 
-    private static String sendAndReceive(Socket socket, String msg) throws IOException {
-        byte[] bytes = msg.getBytes(StandardCharsets.UTF_8);
+    private static void assertPong(Socket socket, String requestId) throws IOException {
+        String ping = "{\"type\":\"PING\",\"requestId\":\"%s\"}\n".formatted(requestId);
+        String pong = "{\"type\":\"PONG\",\"requestId\":\"%s\"}\n".formatted(requestId);
         OutputStream out = socket.getOutputStream();
-        out.write(bytes);
+        out.write(ping.getBytes(StandardCharsets.UTF_8));
         out.flush();
 
-        InputStream in = socket.getInputStream();
-        byte[] buf = new byte[bytes.length];
-        int read = 0;
-        while (read < bytes.length) {
-            int n = in.read(buf, read, bytes.length - read);
-            if (n < 0) {
-                throw new IOException("connection closed after " + read + " bytes");
-            }
-            read += n;
-        }
-        return new String(buf, StandardCharsets.UTF_8);
+        byte[] response = socket.getInputStream().readNBytes(pong.getBytes(StandardCharsets.UTF_8).length);
+        assertEquals(pong, new String(response, StandardCharsets.UTF_8));
     }
 }
