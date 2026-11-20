@@ -1,4 +1,4 @@
-package tu.kaninchen.mq.broker.api;
+package tu.kaninchen.mq.broker.exception;
 
 public final class BrokerException extends RuntimeException {
     public enum Code {

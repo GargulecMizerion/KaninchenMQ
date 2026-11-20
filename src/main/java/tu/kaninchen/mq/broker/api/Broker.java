@@ -1,5 +1,7 @@
 package tu.kaninchen.mq.broker.api;
 
+import tu.kaninchen.mq.broker.core.exchange.ExchangeType;
+
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 

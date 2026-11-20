@@ -6,9 +6,9 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import tu.kaninchen.mq.broker.api.Broker;
-import tu.kaninchen.mq.broker.api.BrokerException;
+import tu.kaninchen.mq.broker.exception.BrokerException;
 import tu.kaninchen.mq.broker.api.Delivery;
-import tu.kaninchen.mq.broker.api.ExchangeType;
+import tu.kaninchen.mq.broker.core.exchange.ExchangeType;
 import tu.kaninchen.mq.broker.api.PublishResult;
 
 import java.nio.charset.StandardCharsets;

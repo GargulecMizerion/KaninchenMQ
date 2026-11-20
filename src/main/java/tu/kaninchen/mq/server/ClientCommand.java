@@ -1,7 +1,7 @@
 package tu.kaninchen.mq.server;
 
 import tools.jackson.databind.JsonNode;
-import tu.kaninchen.mq.broker.api.ExchangeType;
+import tu.kaninchen.mq.broker.core.exchange.ExchangeType;
 
 import java.util.Base64;
 

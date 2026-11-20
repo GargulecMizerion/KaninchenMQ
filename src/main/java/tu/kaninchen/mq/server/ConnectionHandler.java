@@ -12,7 +12,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import tu.kaninchen.mq.broker.api.Broker;
-import tu.kaninchen.mq.broker.api.BrokerException;
+import tu.kaninchen.mq.broker.exception.BrokerException;
 import tu.kaninchen.mq.broker.api.Delivery;
 import tu.kaninchen.mq.broker.api.PublishResult;
 
