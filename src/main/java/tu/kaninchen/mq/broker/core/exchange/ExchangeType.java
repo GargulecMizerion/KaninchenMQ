@@ -1,4 +1,4 @@
-package tu.kaninchen.mq.broker.api;
+package tu.kaninchen.mq.broker.core.exchange;
 
 public enum ExchangeType {
     DIRECT, TOPIC, FANOUT

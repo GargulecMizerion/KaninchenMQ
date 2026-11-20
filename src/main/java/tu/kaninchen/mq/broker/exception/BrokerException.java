@@ -1,4 +1,4 @@
-package tu.kaninchen.mq.broker.api;
+package tu.kaninchen.mq.broker.exception;
 
 public final class BrokerException extends RuntimeException {
     public enum Code {
@@ -8,13 +8,20 @@ public final class BrokerException extends RuntimeException {
         EXCHANGE_TYPE_MISMATCH,
         SUBSCRIPTION_EXISTS,
         INVALID_PREFETCH,
-        DELIVERY_NOT_FOUND
+        DELIVERY_NOT_FOUND,
+        INVALID_RESOURCE_NAME,
+        INVALID_RESOURCE_NAME_LENGTH
     }
 
     private final Code code;
 
     public BrokerException(Code code) {
         super(code.name());
+        this.code = code;
+    }
+
+    public BrokerException(Code code, String message) {
+        super(message);
         this.code = code;
     }
 

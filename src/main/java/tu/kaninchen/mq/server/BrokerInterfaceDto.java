@@ -1,6 +1,6 @@
 package tu.kaninchen.mq.server;
 
-import tu.kaninchen.mq.broker.api.ExchangeType;
+import tu.kaninchen.mq.broker.core.exchange.ExchangeType;
 
 /** Polecenia klienta po zdekodowaniu ramki JSON przez serwer TCP. */
 public sealed interface BrokerInterfaceDto {
