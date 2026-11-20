@@ -2,6 +2,7 @@ package tu.kaninchen.mq.broker.core.queue;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import tu.kaninchen.mq.broker.model.BrokerResourceName;
 
 import java.util.Optional;
 
@@ -13,10 +14,10 @@ class QueueTest {
         String name = "users";
 
         // when
-        Queue queue = new Queue(name);
+        Queue queue = new Queue(new BrokerResourceName(name));
 
         // then
-        Assertions.assertEquals("users", queue.getName());
+        Assertions.assertEquals("users", queue.getResourceName().value());
     }
 
     @Test
@@ -164,7 +165,7 @@ class QueueTest {
     }
 
     private Queue someQueue() {
-        return new Queue("users");
+        return new Queue(new BrokerResourceName("users"));
     }
 
     private Message someMessage() {

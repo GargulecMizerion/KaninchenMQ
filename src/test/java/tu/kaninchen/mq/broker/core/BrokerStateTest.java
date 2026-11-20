@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import tu.kaninchen.mq.broker.core.exchange.Exchange;
 import tu.kaninchen.mq.broker.core.exchange.ExchangeType;
 import tu.kaninchen.mq.broker.core.queue.Queue;
+import tu.kaninchen.mq.broker.model.BrokerResourceName;
 
 import java.util.Optional;
 
@@ -28,7 +29,7 @@ class BrokerStateTest {
 
         // then
         Assertions.assertTrue(result.isEmpty());
-        Assertions.assertSame(queue, brokerState.getQueue("users").orElseThrow());
+        Assertions.assertSame(queue, brokerState.getQueue(new BrokerResourceName("users")).orElseThrow());
     }
 
     @Test
@@ -45,15 +46,15 @@ class BrokerStateTest {
         Assertions.assertTrue(result1.isEmpty());
         Assertions.assertTrue(result2.isPresent());
         Assertions.assertSame(queue1, result2.get());
-        Assertions.assertSame(queue1, brokerState.getQueue("users").orElseThrow());
+        Assertions.assertSame(queue1, brokerState.getQueue(new BrokerResourceName("users")).orElseThrow());
     }
 
     @Test
     public void shouldAddMultipleDifferentQueues() {
         // given
         Queue queue1 = someQueue();
-        Queue queue2 = new Queue("games");
-        Queue queue3 = new Queue("movies");
+        Queue queue2 = new Queue(new BrokerResourceName("games"));
+        Queue queue3 = new Queue(new BrokerResourceName("movies"));
 
         // when
         Optional<Queue> result1 = brokerState.addQueue(queue1);
@@ -64,9 +65,9 @@ class BrokerStateTest {
         Assertions.assertTrue(result1.isEmpty());
         Assertions.assertTrue(result2.isEmpty());
         Assertions.assertTrue(result3.isEmpty());
-        Assertions.assertSame(queue1, brokerState.getQueue("users").orElseThrow());
-        Assertions.assertSame(queue2, brokerState.getQueue("games").orElseThrow());
-        Assertions.assertSame(queue3, brokerState.getQueue("movies").orElseThrow());
+        Assertions.assertSame(queue1, brokerState.getQueue(new BrokerResourceName("users")).orElseThrow());
+        Assertions.assertSame(queue2, brokerState.getQueue(new BrokerResourceName("games")).orElseThrow());
+        Assertions.assertSame(queue3, brokerState.getQueue(new BrokerResourceName("movies")).orElseThrow());
     }
 
     @Test
@@ -78,13 +79,13 @@ class BrokerStateTest {
         brokerState.addQueue(queue);
 
         // then
-        Assertions.assertSame(queue, brokerState.getQueue("users").orElseThrow());
+        Assertions.assertSame(queue, brokerState.getQueue(new BrokerResourceName("users")).orElseThrow());
     }
 
     @Test
     public void shouldReturnEmptyWhenQueueDoesNotExist() {
         // when & then
-        Assertions.assertTrue(brokerState.getQueue("users").isEmpty());
+        Assertions.assertTrue(brokerState.getQueue(new BrokerResourceName("users")).isEmpty());
     }
 
     @Test
@@ -94,22 +95,22 @@ class BrokerStateTest {
 
         // when
         brokerState.addQueue(queue);
-        Optional<Queue> result = brokerState.removeQueue(queue.getName());
+        Optional<Queue> result = brokerState.removeQueue(queue.getResourceName());
 
         // then
         Assertions.assertTrue(result.isPresent());
         Assertions.assertSame(queue, result.get());
-        Assertions.assertTrue(brokerState.getQueue("users").isEmpty());
+        Assertions.assertTrue(brokerState.getQueue(new BrokerResourceName("users")).isEmpty());
     }
 
     @Test
     public void shouldReturnEmptyWhenRemovingNonExistingQueue() {
         // given & when
-        Optional<Queue> result = brokerState.removeQueue("users");
+        Optional<Queue> result = brokerState.removeQueue(new BrokerResourceName("users"));
 
         // then
         Assertions.assertTrue(result.isEmpty());
-        Assertions.assertTrue(brokerState.getQueue("users").isEmpty());
+        Assertions.assertTrue(brokerState.getQueue(new BrokerResourceName("users")).isEmpty());
     }
 
     @Test
@@ -121,13 +122,13 @@ class BrokerStateTest {
         brokerState.addQueue(queue);
 
         // then
-        Assertions.assertTrue(brokerState.containsQueue("users"));
+        Assertions.assertTrue(brokerState.containsQueue(new BrokerResourceName("users")));
     }
 
     @Test
     public void shouldReturnFalseWhenQueueDoesNotExist() {
         // when & then
-        Assertions.assertFalse(brokerState.containsQueue("users"));
+        Assertions.assertFalse(brokerState.containsQueue(new BrokerResourceName("users")));
     }
 
     @Test
@@ -140,7 +141,7 @@ class BrokerStateTest {
 
         // then
         Assertions.assertTrue(result.isEmpty());
-        Assertions.assertSame(exchange, brokerState.getExchange("users").orElseThrow());
+        Assertions.assertSame(exchange, brokerState.getExchange(new BrokerResourceName("users")).orElseThrow());
     }
 
     @Test
@@ -157,15 +158,15 @@ class BrokerStateTest {
         Assertions.assertTrue(result1.isEmpty());
         Assertions.assertTrue(result2.isPresent());
         Assertions.assertSame(exchange1, result2.get());
-        Assertions.assertSame(exchange1, brokerState.getExchange("users").orElseThrow());
+        Assertions.assertSame(exchange1, brokerState.getExchange(new BrokerResourceName("users")).orElseThrow());
     }
 
     @Test
     public void shouldAddMultipleDifferentExchanges() {
         // given
         Exchange exchange1 = someExchange();
-        Exchange exchange2 = new Exchange("games", ExchangeType.DIRECT);
-        Exchange exchange3 = new Exchange("movies", ExchangeType.DIRECT);
+        Exchange exchange2 = new Exchange(new BrokerResourceName("games"), ExchangeType.DIRECT);
+        Exchange exchange3 = new Exchange(new BrokerResourceName("movies"), ExchangeType.DIRECT);
 
         // when
         Optional<Exchange> result1 = brokerState.addExchange(exchange1);
@@ -176,9 +177,9 @@ class BrokerStateTest {
         Assertions.assertTrue(result1.isEmpty());
         Assertions.assertTrue(result2.isEmpty());
         Assertions.assertTrue(result3.isEmpty());
-        Assertions.assertSame(exchange1, brokerState.getExchange("users").orElseThrow());
-        Assertions.assertSame(exchange2, brokerState.getExchange("games").orElseThrow());
-        Assertions.assertSame(exchange3, brokerState.getExchange("movies").orElseThrow());
+        Assertions.assertSame(exchange1, brokerState.getExchange(new BrokerResourceName("users")).orElseThrow());
+        Assertions.assertSame(exchange2, brokerState.getExchange(new BrokerResourceName("games")).orElseThrow());
+        Assertions.assertSame(exchange3, brokerState.getExchange(new BrokerResourceName("movies")).orElseThrow());
     }
 
     @Test
@@ -190,13 +191,13 @@ class BrokerStateTest {
         brokerState.addExchange(exchange);
 
         // then
-        Assertions.assertSame(exchange, brokerState.getExchange("users").orElseThrow());
+        Assertions.assertSame(exchange, brokerState.getExchange(new BrokerResourceName("users")).orElseThrow());
     }
 
     @Test
     public void shouldReturnEmptyWhenExchangeDoesNotExist() {
         // when & then
-        Assertions.assertTrue(brokerState.getExchange("users").isEmpty());
+        Assertions.assertTrue(brokerState.getExchange(new BrokerResourceName("users")).isEmpty());
     }
 
     @Test
@@ -206,22 +207,22 @@ class BrokerStateTest {
 
         // when
         brokerState.addExchange(exchange);
-        Optional<Exchange> result = brokerState.removeExchange(exchange.getName());
+        Optional<Exchange> result = brokerState.removeExchange(exchange.getResourceName());
 
         // then
         Assertions.assertTrue(result.isPresent());
         Assertions.assertSame(exchange, result.get());
-        Assertions.assertTrue(brokerState.getExchange("users").isEmpty());
+        Assertions.assertTrue(brokerState.getExchange(new BrokerResourceName("users")).isEmpty());
     }
 
     @Test
     public void shouldReturnEmptyWhenRemovingNonExistingExchange() {
         // given & when
-        Optional<Exchange> result = brokerState.removeExchange("users");
+        Optional<Exchange> result = brokerState.removeExchange(new BrokerResourceName("users"));
 
         // then
         Assertions.assertTrue(result.isEmpty());
-        Assertions.assertTrue(brokerState.getExchange("users").isEmpty());
+        Assertions.assertTrue(brokerState.getExchange(new BrokerResourceName("users")).isEmpty());
     }
 
     @Test
@@ -233,20 +234,20 @@ class BrokerStateTest {
         brokerState.addExchange(exchange);
 
         // then
-        Assertions.assertTrue(brokerState.containsExchange("users"));
+        Assertions.assertTrue(brokerState.containsExchange(new BrokerResourceName("users")));
     }
 
     @Test
     public void shouldReturnFalseWhenExchangeNotExist() {
         // when & then
-        Assertions.assertFalse(brokerState.containsExchange("users"));
+        Assertions.assertFalse(brokerState.containsExchange(new BrokerResourceName("users")));
     }
 
     private Queue someQueue() {
-        return new Queue("users");
+        return new Queue(new BrokerResourceName("users"));
     }
 
     private Exchange someExchange() {
-        return new Exchange("users", ExchangeType.DIRECT);
+        return new Exchange(new BrokerResourceName("users"), ExchangeType.DIRECT);
     }
 }

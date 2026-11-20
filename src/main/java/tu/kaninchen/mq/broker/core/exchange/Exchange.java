@@ -1,6 +1,7 @@
 package tu.kaninchen.mq.broker.core.exchange;
 
 import tu.kaninchen.mq.broker.core.queue.Queue;
+import tu.kaninchen.mq.broker.model.BrokerResourceName;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -9,12 +10,12 @@ import java.util.stream.Collectors;
 
 public class Exchange {
 
-    private final String name;
+    private final BrokerResourceName resourceName;
     private final ExchangeType type;
     private final Set<Binding> bindings;
 
-    public Exchange(String name, ExchangeType type) {
-        this.name = Objects.requireNonNull(name);
+    public Exchange(BrokerResourceName resourceName, ExchangeType type) {
+        this.resourceName = Objects.requireNonNull(resourceName);
         this.type = Objects.requireNonNull(type);
         this.bindings = new HashSet<>();
     }
@@ -84,8 +85,8 @@ public class Exchange {
         return bindings.size();
     }
 
-    public String getName() {
-        return name;
+    public BrokerResourceName getResourceName() {
+        return resourceName;
     }
 
     public ExchangeType getType() {

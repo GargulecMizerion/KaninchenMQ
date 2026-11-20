@@ -2,6 +2,7 @@ package tu.kaninchen.mq.broker.core.exchange;
 
 import org.junit.jupiter.api.Test;
 import tu.kaninchen.mq.broker.core.queue.Queue;
+import tu.kaninchen.mq.broker.model.BrokerResourceName;
 
 import java.util.Set;
 
@@ -86,11 +87,11 @@ class FanoutExchangeTest {
     }
 
     private Exchange fanoutExchange() {
-        return new Exchange("notifications", ExchangeType.FANOUT);
+        return new Exchange(new BrokerResourceName("notifications"), ExchangeType.FANOUT);
     }
 
     private Queue queue(String name) {
-        return new Queue(name);
+        return new Queue(new BrokerResourceName(name));
     }
 }
 

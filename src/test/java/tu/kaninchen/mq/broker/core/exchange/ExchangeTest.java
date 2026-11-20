@@ -3,6 +3,7 @@ package tu.kaninchen.mq.broker.core.exchange;
 
 import org.junit.jupiter.api.Test;
 import tu.kaninchen.mq.broker.core.queue.Queue;
+import tu.kaninchen.mq.broker.model.BrokerResourceName;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,10 +16,10 @@ class ExchangeTest {
         ExchangeType type = ExchangeType.DIRECT;
 
         // when
-        Exchange exchange = new Exchange(name, type);
+        Exchange exchange = new Exchange(new BrokerResourceName(name), type);
 
         // then
-        assertEquals(name, exchange.getName());
+        assertEquals(name, exchange.getResourceName().value());
         assertEquals(type, exchange.getType());
         assertEquals(0, exchange.getBindingCount());
     }
@@ -43,7 +44,7 @@ class ExchangeTest {
         // when & then
         assertThrows(
             NullPointerException.class,
-            () -> new Exchange(name, null)
+            () -> new Exchange(new BrokerResourceName(name), null)
         );
     }
 
@@ -134,10 +135,10 @@ class ExchangeTest {
     }
 
     private Exchange exchange() {
-        return new Exchange("users", ExchangeType.DIRECT);
+        return new Exchange(new BrokerResourceName("users"), ExchangeType.DIRECT);
     }
 
     private Queue queue(String name) {
-        return new Queue(name);
+        return new Queue(new BrokerResourceName(name));
     }
 }

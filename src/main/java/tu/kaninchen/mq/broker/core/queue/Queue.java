@@ -1,5 +1,7 @@
 package tu.kaninchen.mq.broker.core.queue;
 
+import tu.kaninchen.mq.broker.model.BrokerResourceName;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
@@ -7,11 +9,11 @@ import java.util.Optional;
 
 public class Queue {
 
-    private final String name;
+    private final BrokerResourceName resourceName;
     private final Deque<Message> messageDeque;
 
-    public Queue(String name) {
-        this.name = Objects.requireNonNull(name);
+    public Queue(BrokerResourceName resourceName) {
+        this.resourceName = Objects.requireNonNull(resourceName);
         this.messageDeque = new ArrayDeque<>();
     }
 
@@ -35,7 +37,7 @@ public class Queue {
         return messageDeque.isEmpty();
     }
 
-    public String getName() {
-        return name;
+    public BrokerResourceName getResourceName() {
+        return resourceName;
     }
 }

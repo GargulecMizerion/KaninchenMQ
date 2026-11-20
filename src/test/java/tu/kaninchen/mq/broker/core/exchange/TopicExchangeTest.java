@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import tu.kaninchen.mq.broker.core.queue.Queue;
+import tu.kaninchen.mq.broker.model.BrokerResourceName;
 
 import java.util.Set;
 
@@ -13,8 +14,8 @@ class TopicExchangeTest {
     @Test
     public void shouldReturnEmptySetWhenRoutingKeyDoesNotMatch() {
         // given
-        Exchange exchange = new Exchange("exchange", ExchangeType.TOPIC);
-        Queue usersQueue = new Queue("users");
+        Exchange exchange = new Exchange(new BrokerResourceName("exchange"), ExchangeType.TOPIC);
+        Queue usersQueue = new Queue(new BrokerResourceName("users"));
 
         // when
         exchange.addBinding(new Binding("users.created", usersQueue));
@@ -269,10 +270,10 @@ class TopicExchangeTest {
     }
 
     private Exchange topicExchange() {
-        return new Exchange("users", ExchangeType.TOPIC);
+        return new Exchange(new BrokerResourceName("users"), ExchangeType.TOPIC);
     }
 
     private Queue queue(String name) {
-        return new Queue(name);
+        return new Queue(new BrokerResourceName(name));
     }
 }

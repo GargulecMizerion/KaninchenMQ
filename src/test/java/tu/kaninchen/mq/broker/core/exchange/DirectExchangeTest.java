@@ -2,6 +2,7 @@ package tu.kaninchen.mq.broker.core.exchange;
 
 import org.junit.jupiter.api.Test;
 import tu.kaninchen.mq.broker.core.queue.Queue;
+import tu.kaninchen.mq.broker.model.BrokerResourceName;
 
 import java.util.Set;
 
@@ -96,11 +97,11 @@ class DirectExchangeTest {
     }
 
     private Exchange directExchange() {
-        return new Exchange("users", ExchangeType.DIRECT);
+        return new Exchange(new BrokerResourceName("users"), ExchangeType.DIRECT);
     }
 
     private Queue queue(String name) {
-        return new Queue(name);
+        return new Queue(new BrokerResourceName(name));
     }
 }
 
